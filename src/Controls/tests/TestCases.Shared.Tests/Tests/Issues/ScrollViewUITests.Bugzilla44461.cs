@@ -17,11 +17,11 @@ namespace Microsoft.Maui.TestCases.Tests
 
 		// Bugzilla44461 (src\Compatibility\ControlGallery\src\Issues.Shared\Bugzilla44461.cs)
 		[Test]
+		[FailsOnIOS("This test is failing, likely due to product issue")]
+		[FailsOnMac("This test is failing, likely due to product issue")]
+		[FailsOnWindows("This test is failing, likely due to product issue")]
 		public void Bugzilla44461Test()
 		{
-			this.IgnoreIfPlatforms(new TestDevice[] { TestDevice.iOS, TestDevice.Mac, TestDevice.Windows },
-				"This test is failing, likely due to product issue");
-
 			var positions = TapButton(0);
 			ClassicAssert.AreEqual(positions.initialPosition.X, positions.finalPosition.X);
 			ClassicAssert.LessOrEqual(positions.finalPosition.X, 1);
@@ -30,7 +30,7 @@ namespace Microsoft.Maui.TestCases.Tests
 
 		(System.Drawing.Rectangle initialPosition, System.Drawing.Rectangle finalPosition) TapButton(int position)
 		{
-			var buttonId= $"{position}";
+			var buttonId = $"{position}";
 			App.WaitForElement(buttonId);
 			var initialPosition = App.FindElement(buttonId).GetRect();
 			App.Tap(buttonId);

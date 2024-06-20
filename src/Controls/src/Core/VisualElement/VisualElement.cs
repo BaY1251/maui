@@ -279,13 +279,15 @@ namespace Microsoft.Maui.Controls
 		public static readonly BindableProperty BackgroundProperty = BindableProperty.Create(nameof(Background), typeof(Brush), typeof(VisualElement), Brush.Default,
 			propertyChanging: (bindable, oldvalue, newvalue) =>
 			{
-				if (oldvalue == null) return;
+				if (oldvalue == null)
+					return;
 
 				(bindable as VisualElement)?.StopNotifyingBackgroundChanges();
 			},
 			propertyChanged: (bindable, oldvalue, newvalue) =>
 			{
-				if (newvalue == null) return;
+				if (newvalue == null)
+					return;
 
 				(bindable as VisualElement)?.NotifyBackgroundChanges();
 			});
@@ -318,7 +320,7 @@ namespace Microsoft.Maui.Controls
 				_backgroundChanged ??= (sender, e) => OnPropertyChanged(nameof(Background));
 				_backgroundProxy ??= new();
 				_backgroundProxy.Subscribe(background, _backgroundChanged);
-							
+
 				OnParentResourcesChanged(this.GetMergedResources());
 				((IElementDefinition)this).AddResourcesChangedListener(background.OnParentResourcesChanged);
 			}
@@ -1628,11 +1630,11 @@ namespace Microsoft.Maui.Controls
 		{
 			var constraint = LayoutConstraint.None;
 			var element = (VisualElement)bindable;
-			if (element.WidthRequest >= 0 && element.MinimumWidthRequest >= 0)
+			if (element.WidthRequest >= 0)
 			{
 				constraint |= LayoutConstraint.HorizontallyFixed;
 			}
-			if (element.HeightRequest >= 0 && element.MinimumHeightRequest >= 0)
+			if (element.HeightRequest >= 0)
 			{
 				constraint |= LayoutConstraint.VerticallyFixed;
 			}
@@ -2139,17 +2141,26 @@ namespace Microsoft.Maui.Controls
 		}
 
 		/// <summary>
-		/// Occurs when an element has been constructed and added to the object tree.
+		/// Occurs when an element has been constructed and added to the platform visual tree.
 		/// </summary>
 		/// <remarks>This event may occur before the element has been measured so should not be relied on for size information.</remarks>
 		public event EventHandler? Loaded
 		{
 			add
 			{
+				bool loadedAlreadyFired = _isLoadedFired;
+
 				_loaded += value;
 				UpdatePlatformUnloadedLoadedWiring(Window);
-				if (_isLoadedFired)
-					_loaded?.Invoke(this, EventArgs.Empty);
+
+				// The first time UpdatePlatformUnloadedLoadedWiring is called it will handle
+				// invoking _loaded
+				// This is only to make sure that new subscribers get invoked when the element is already loaded
+				// and a previous subscriber has already invoked the UpdatePlatformUnloadedLoadedWiring path
+				if (loadedAlreadyFired && _isLoadedFired)
+				{
+					value?.Invoke(this, EventArgs.Empty);
+				}
 
 			}
 			remove
@@ -2160,7 +2171,7 @@ namespace Microsoft.Maui.Controls
 		}
 
 		/// <summary>
-		/// Occurs when an element is no longer connected to the main object tree.
+		/// Occurs when an element is no longer connected to the platform visual tree.
 		/// </summary>
 		public event EventHandler? Unloaded
 		{
@@ -2203,7 +2214,9 @@ namespace Microsoft.Maui.Controls
 			// unloaded is still correctly being watched for.
 
 			if (updateWiring)
+			{
 				UpdatePlatformUnloadedLoadedWiring(Window);
+			}
 		}
 
 		void SendUnloaded() => SendUnloaded(true);
